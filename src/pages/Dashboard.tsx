@@ -1,22 +1,35 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FileText, MessageSquare, Brain, TrendingUp, Trophy, Clock } from 'lucide-react';
-import MainLayout from '../components/MainLayout';
-import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FileText,
+  MessageSquare,
+  Brain,
+  TrendingUp,
+  Trophy,
+  Clock,
+} from "lucide-react";
+import MainLayout from "../components/MainLayout";
+import { useAuth } from "../contexts/AuthContext";
 import {
   getDashboardStats,
   getCourses,
   getCourseLeaderboard,
   getRecentActivity,
-} from '../lib/api';
-import { DashboardStats, Course, CourseLeaderboardEntry, RecentActivity } from '../lib/types';
+} from "../lib/api";
+import {
+  DashboardStats,
+  Course,
+  CourseLeaderboardEntry,
+  RecentActivity,
+} from "../lib/types";
+import { extractNameFromEmail } from "../utils/extract-name";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<CourseLeaderboardEntry[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +49,7 @@ const Dashboard = () => {
           setSelectedCourse(coursesData[0].id);
         }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
       }
@@ -52,7 +65,7 @@ const Dashboard = () => {
           const data = await getCourseLeaderboard(selectedCourse);
           setLeaderboard(data);
         } catch (error) {
-          console.error('Error fetching leaderboard:', error);
+          console.error("Error fetching leaderboard:", error);
         }
       }
     };
@@ -63,11 +76,13 @@ const Dashboard = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
 
-    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 1) return "Just now";
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInHours < 48) return 'Yesterday';
+    if (diffInHours < 48) return "Yesterday";
     return `${Math.floor(diffInHours / 24)}d ago`;
   };
 
@@ -86,9 +101,11 @@ const Dashboard = () => {
       <div className="space-y-8">
         <div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.name}!
+            Welcome back, {extractNameFromEmail(currentUser?.email || "")}!
           </h3>
-          <p className="text-gray-600">Here's a quick overview of your learning progress.</p>
+          <p className="text-gray-600">
+            Here's a quick overview of your learning progress.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -150,7 +167,9 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <Trophy className="w-6 h-6 text-yellow-500" />
-                <h3 className="text-xl font-bold text-gray-900">Course Leaderboard</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Course Leaderboard
+                </h3>
               </div>
               <select
                 value={selectedCourse}
@@ -172,33 +191,37 @@ const Dashboard = () => {
                     <div
                       key={entry.userId}
                       className={`flex items-center justify-between p-4 rounded-lg ${
-                        entry.userId === user?.id
-                          ? 'bg-blue-50 border-2 border-blue-300'
-                          : 'bg-gray-50'
+                        entry.userId === currentUser?.uid
+                          ? "bg-blue-50 border-2 border-blue-300"
+                          : "bg-gray-50"
                       }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
                             entry.rank === 1
-                              ? 'bg-yellow-400 text-yellow-900'
+                              ? "bg-yellow-400 text-yellow-900"
                               : entry.rank === 2
-                              ? 'bg-gray-300 text-gray-700'
+                              ? "bg-gray-300 text-gray-700"
                               : entry.rank === 3
-                              ? 'bg-orange-400 text-orange-900'
-                              : 'bg-gray-200 text-gray-600'
+                              ? "bg-orange-400 text-orange-900"
+                              : "bg-gray-200 text-gray-600"
                           }`}
                         >
                           {entry.rank}
                         </div>
-                        <span className="font-medium text-gray-900">{entry.name}</span>
+                        <span className="font-medium text-gray-900">
+                          {entry.name}
+                        </span>
                       </div>
-                      <span className="font-bold text-blue-600">{entry.score} XP</span>
+                      <span className="font-bold text-blue-600">
+                        {entry.score} XP
+                      </span>
                     </div>
                   ))}
                 </div>
                 <button
-                  onClick={() => navigate('/leaderboard')}
+                  onClick={() => navigate("/leaderboard")}
                   className="w-full mt-4 py-2 text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   View Full Leaderboard
@@ -214,7 +237,9 @@ const Dashboard = () => {
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center gap-2 mb-6">
               <Clock className="w-6 h-6 text-gray-600" />
-              <h3 className="text-xl font-bold text-gray-900">Recent Activity</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                Recent Activity
+              </h3>
             </div>
             <div className="space-y-4">
               {recentActivity.map((activity) => (

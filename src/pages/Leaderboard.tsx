@@ -1,17 +1,25 @@
-import { useState, useEffect } from 'react';
-import { Trophy, Crown, Medal, Award } from 'lucide-react';
-import MainLayout from '../components/MainLayout';
-import { useAuth } from '../contexts/AuthContext';
-import { getCourses, getCourseLeaderboard, getGlobalLeaderboard } from '../lib/api';
-import { Course, CourseLeaderboardEntry, LeaderboardEntry } from '../lib/types';
+import { useState, useEffect } from "react";
+import { Trophy, Crown, Medal, Award } from "lucide-react";
+import MainLayout from "../components/MainLayout";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  getCourses,
+  getCourseLeaderboard,
+  getGlobalLeaderboard,
+} from "../lib/api";
+import { Course, CourseLeaderboardEntry, LeaderboardEntry } from "../lib/types";
 
 const Leaderboard = () => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [viewType, setViewType] = useState<'course' | 'global'>('course');
-  const [courseLeaderboard, setCourseLeaderboard] = useState<CourseLeaderboardEntry[]>([]);
-  const [globalLeaderboard, setGlobalLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [viewType, setViewType] = useState<"course" | "global">("course");
+  const [courseLeaderboard, setCourseLeaderboard] = useState<
+    CourseLeaderboardEntry[]
+  >([]);
+  const [globalLeaderboard, setGlobalLeaderboard] = useState<
+    LeaderboardEntry[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +31,7 @@ const Leaderboard = () => {
           setSelectedCourse(data[0].id);
         }
       } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error("Error fetching courses:", error);
       } finally {
         setLoading(false);
       }
@@ -34,23 +42,23 @@ const Leaderboard = () => {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      if (viewType === 'course' && selectedCourse) {
+      if (viewType === "course" && selectedCourse) {
         setLoading(true);
         try {
           const data = await getCourseLeaderboard(selectedCourse);
           setCourseLeaderboard(data);
         } catch (error) {
-          console.error('Error fetching course leaderboard:', error);
+          console.error("Error fetching course leaderboard:", error);
         } finally {
           setLoading(false);
         }
-      } else if (viewType === 'global') {
+      } else if (viewType === "global") {
         setLoading(true);
         try {
           const data = await getGlobalLeaderboard();
           setGlobalLeaderboard(data);
         } catch (error) {
-          console.error('Error fetching global leaderboard:', error);
+          console.error("Error fetching global leaderboard:", error);
         } finally {
           setLoading(false);
         }
@@ -74,7 +82,8 @@ const Leaderboard = () => {
   };
 
   const getRankBadge = (rank: number) => {
-    const baseClasses = 'w-10 h-10 rounded-full flex items-center justify-center font-bold';
+    const baseClasses =
+      "w-10 h-10 rounded-full flex items-center justify-center font-bold";
     switch (rank) {
       case 1:
         return `${baseClasses} bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-lg`;
@@ -108,28 +117,28 @@ const Leaderboard = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex gap-2">
               <button
-                onClick={() => setViewType('course')}
+                onClick={() => setViewType("course")}
                 className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  viewType === 'course'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  viewType === "course"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Course Leaderboard
               </button>
               <button
-                onClick={() => setViewType('global')}
+                onClick={() => setViewType("global")}
                 className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  viewType === 'global'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  viewType === "global"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Global Leaderboard
               </button>
             </div>
 
-            {viewType === 'course' && (
+            {viewType === "course" && (
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
@@ -150,15 +159,19 @@ const Leaderboard = () => {
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
-          ) : viewType === 'course' && courseLeaderboard.length === 0 ? (
+          ) : viewType === "course" && courseLeaderboard.length === 0 ? (
             <div className="text-center py-12">
               <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No leaderboard data available for this course.</p>
+              <p className="text-gray-600">
+                No leaderboard data available for this course.
+              </p>
             </div>
-          ) : viewType === 'global' && globalLeaderboard.length === 0 ? (
+          ) : viewType === "global" && globalLeaderboard.length === 0 ? (
             <div className="text-center py-12">
               <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No global leaderboard data available.</p>
+              <p className="text-gray-600">
+                No global leaderboard data available.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -177,19 +190,21 @@ const Leaderboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {viewType === 'course'
+                  {viewType === "course"
                     ? courseLeaderboard.map((entry) => (
                         <tr
                           key={entry.userId}
                           className={`transition-colors ${
-                            entry.userId === user?.id
-                              ? 'bg-blue-50 border-l-4 border-l-blue-500'
-                              : 'hover:bg-gray-50'
+                            entry.userId === currentUser?.uid
+                              ? "bg-blue-50 border-l-4 border-l-blue-500"
+                              : "hover:bg-gray-50"
                           }`}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className={getRankBadge(entry.rank)}>{entry.rank}</div>
+                              <div className={getRankBadge(entry.rank)}>
+                                {entry.rank}
+                              </div>
                               {getRankIcon(entry.rank)}
                             </div>
                           </td>
@@ -198,7 +213,7 @@ const Leaderboard = () => {
                               <span className="font-medium text-gray-900">
                                 {entry.name}
                               </span>
-                              {entry.userId === user?.id && (
+                              {entry.userId === currentUser?.uid && (
                                 <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
                                   You
                                 </span>
@@ -206,7 +221,9 @@ const Leaderboard = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <span className="font-bold text-blue-600">{entry.score} XP</span>
+                            <span className="font-bold text-blue-600">
+                              {entry.score} XP
+                            </span>
                           </td>
                         </tr>
                       ))
@@ -214,14 +231,16 @@ const Leaderboard = () => {
                         <tr
                           key={entry.userId}
                           className={`transition-colors ${
-                            entry.userId === user?.id
-                              ? 'bg-blue-50 border-l-4 border-l-blue-500'
-                              : 'hover:bg-gray-50'
+                            entry.userId === currentUser?.uid
+                              ? "bg-blue-50 border-l-4 border-l-blue-500"
+                              : "hover:bg-gray-50"
                           }`}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className={getRankBadge(entry.rank)}>{entry.rank}</div>
+                              <div className={getRankBadge(entry.rank)}>
+                                {entry.rank}
+                              </div>
                               {getRankIcon(entry.rank)}
                             </div>
                           </td>
@@ -230,7 +249,7 @@ const Leaderboard = () => {
                               <span className="font-medium text-gray-900">
                                 {entry.name}
                               </span>
-                              {entry.userId === user?.id && (
+                              {entry.userId === currentUser?.uid && (
                                 <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
                                   You
                                 </span>
@@ -238,7 +257,9 @@ const Leaderboard = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <span className="font-bold text-blue-600">{entry.score} XP</span>
+                            <span className="font-bold text-blue-600">
+                              {entry.score} XP
+                            </span>
                           </td>
                         </tr>
                       ))}
