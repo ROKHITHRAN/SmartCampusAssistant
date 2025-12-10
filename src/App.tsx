@@ -1,15 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Dashboard from './pages/Dashboard';
-import Courses from './pages/Courses';
-import CourseDetail from './pages/CourseDetail';
-import QA from './pages/QA';
-import Summaries from './pages/Summaries';
-import Quiz from './pages/Quiz';
-import Leaderboard from './pages/Leaderboard';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
+import QA from "./pages/QA";
+import Summaries from "./pages/Summaries";
+import Quiz from "./pages/Quiz";
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
@@ -74,7 +74,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

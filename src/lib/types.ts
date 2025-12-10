@@ -70,15 +70,26 @@ export interface AskQuestionResponse {
   sources?: string[];
 }
 
-export interface ChatMessage {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
-
 export interface RecentActivity {
   id: string;
   text: string;
   timestamp: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  title: string;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+  startedFromCourseId?: string;
+  startedFromMaterialId?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  sender: "user" | "assistant";
+  content: string;
+  createdAt: string; // ISO string
+  sources?: string[]; // optional list of source labels
 }
