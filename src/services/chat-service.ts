@@ -1,48 +1,108 @@
-// src/lib/chatService.ts
-
+// src/services/chat-service.ts
+import {
+  collection,
+  doc,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
+import { auth } from "../firebase/config";
+import { db } from "../firebase/config";
 import { ChatConversation, ChatMessage } from "../lib/types";
 
-// Simple in-memory mock store for now.
-// You can later replace these with real API calls to your backend.
-let conversations: ChatConversation[] = [];
-let messages: ChatMessage[] = [];
+const getUid = () => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error("User not authenticated");
+  }
+  return uid;
+};
 
-// Helper to generate IDs
-const genId = () => crypto.randomUUID?.() ?? Date.now().toString();
+const chatsCollectionRef = (uid: string) =>
+  collection(db, "users", uid, "chats");
+const chatDocRef = (uid: string, chatId: string) =>
+  doc(db, "users", uid, "chats", chatId);
+const messagesCollectionRef = (uid: string, chatId: string) =>
+  collection(db, "users", uid, "chats", chatId, "messages");
+
+// Helper: convert Firestore timestamp -> ISO string safely
+const tsToIso = (value: any): string => {
+  // value may be a Timestamp, Date, string, or undefined
+  if (!value) return new Date().toISOString();
+  if (typeof value === "string") return value;
+  if (value.toDate) return value.toDate().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  return new Date().toISOString();
+};
 
 export async function getConversations(): Promise<ChatConversation[]> {
-  // In a real app, call your backend here.
-  // For now, return in-memory list sorted by updatedAt desc.
-  return conversations
-    .slice()
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    );
+  const uid = getUid();
+
+  const q = query(chatsCollectionRef(uid), orderBy("updatedAt", "desc"));
+  const snap = await getDocs(q);
+
+  const conversations: ChatConversation[] = snap.docs.map((d) => {
+    const data = d.data() as any;
+    return {
+      id: d.id,
+      title: data.title ?? "New Chat",
+      createdAt: tsToIso(data.createdAt),
+      updatedAt: tsToIso(data.updatedAt),
+    };
+  });
+
+  return conversations;
 }
 
 export async function getConversationMessages(
   conversationId: string
 ): Promise<ChatMessage[]> {
-  return messages
-    .filter((m) => m.conversationId === conversationId)
-    .sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+  const uid = getUid();
+
+  const q = query(
+    messagesCollectionRef(uid, conversationId),
+    orderBy("createdAt", "asc")
+  );
+  const snap = await getDocs(q);
+
+  const msgs: ChatMessage[] = snap.docs.map((d) => {
+    const data = d.data() as any;
+    return {
+      id: d.id,
+      conversationId,
+      sender: data.sender,
+      content: data.content,
+      createdAt: tsToIso(data.createdAt),
+      sources: data.sources ?? [],
+    };
+  });
+
+  return msgs;
 }
 
 export async function createConversation(
   initialTitle?: string
 ): Promise<ChatConversation> {
+  const uid = getUid();
+
   const now = new Date().toISOString();
+  const docRef = await addDoc(chatsCollectionRef(uid), {
+    title: initialTitle || "New Chat",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
   const conversation: ChatConversation = {
-    id: genId(),
+    id: docRef.id,
     title: initialTitle || "New Chat",
     createdAt: now,
     updatedAt: now,
   };
-  conversations.push(conversation);
+
   return conversation;
 }
 
@@ -50,59 +110,86 @@ export async function renameConversation(
   conversationId: string,
   title: string
 ): Promise<void> {
-  const convo = conversations.find((c) => c.id === conversationId);
-  if (convo) {
-    convo.title = title || convo.title;
-    convo.updatedAt = new Date().toISOString();
-  }
+  const uid = getUid();
+  const ref = chatDocRef(uid, conversationId);
+
+  await updateDoc(ref, {
+    title: title || "New Chat",
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function deleteConversation(
   conversationId: string
 ): Promise<void> {
-  conversations = conversations.filter((c) => c.id !== conversationId);
-  messages = messages.filter((m) => m.conversationId !== conversationId);
+  const uid = getUid();
+
+  // Delete messages subcollection
+  const msgsSnap = await getDocs(messagesCollectionRef(uid, conversationId));
+  const batchDeletes: Promise<void>[] = [];
+  msgsSnap.forEach((m) => {
+    batchDeletes.push(deleteDoc(m.ref));
+  });
+  await Promise.all(batchDeletes);
+
+  // Delete chat document
+  await deleteDoc(chatDocRef(uid, conversationId));
 }
 
-// This simulates doing RAG + LLM and returns both stored message objects.
+// This still simulates RAG + LLM, but now persists to Firestore.
 export async function sendMessage(
   conversationId: string,
   content: string
 ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage }> {
-  const now = new Date().toISOString();
+  const uid = getUid();
+
+  const nowIso = new Date().toISOString();
+
+  // 1. Add user message
+  const userDocRef = await addDoc(messagesCollectionRef(uid, conversationId), {
+    sender: "user",
+    content,
+    createdAt: serverTimestamp(),
+  });
 
   const userMessage: ChatMessage = {
-    id: genId(),
+    id: userDocRef.id,
     conversationId,
     sender: "user",
     content,
-    createdAt: now,
+    createdAt: nowIso,
   };
 
-  messages.push(userMessage);
+  // 2. Fake assistant answer (replace with real backend later)
+  const assistantContent = `This is a placeholder answer. In the real app, I will answer using your uploaded notes.\n\nYou asked: "${content}"`;
 
-  // Update conversation updatedAt
-  const convo = conversations.find((c) => c.id === conversationId);
-  if (convo) {
-    convo.updatedAt = now;
-    // Optionally set title from first user message
-    if (!convo.title || convo.title === "New Chat") {
-      convo.title =
-        content.length > 40 ? content.slice(0, 37) + "..." : content;
+  const assistantDocRef = await addDoc(
+    messagesCollectionRef(uid, conversationId),
+    {
+      sender: "assistant",
+      content: assistantContent,
+      createdAt: serverTimestamp(),
+      sources: ["Example Note.pdf (page 2)"],
     }
-  }
+  );
 
-  // Fake assistant response – replace this with real backend call
   const assistantMessage: ChatMessage = {
-    id: genId(),
+    id: assistantDocRef.id,
     conversationId,
     sender: "assistant",
-    content: `This is a placeholder answer. In the real app, I will answer using your uploaded notes.\n\nYou asked: "${content}"`,
-    createdAt: new Date().toISOString(),
+    content: assistantContent,
+    createdAt: nowIso,
     sources: ["Example Note.pdf (page 2)"],
   };
 
-  messages.push(assistantMessage);
+  // 3. Update chat updatedAt and (optionally) title
+  const chatRef = chatDocRef(uid, conversationId);
+  await updateDoc(chatRef, {
+    updatedAt: serverTimestamp(),
+    // If you want: first non-empty user message becomes title
+    // But only if title is "New Chat" or empty
+    // We'll just always leave title as is for now; you can enhance later.
+  });
 
   return { userMessage, assistantMessage };
 }

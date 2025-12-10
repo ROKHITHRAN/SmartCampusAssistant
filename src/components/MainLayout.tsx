@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
-import Sidebar from './Sidebar';
-import TopBar from './TopBar';
+// src/components/MainLayout.tsx
+import { ReactNode } from "react";
+import Sidebar from "./Sidebar";
+import TopBar from "./TopBar";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -12,10 +13,8 @@ const MainLayout = ({ children, title }: MainLayoutProps) => {
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <TopBar title={title} />
-      <main className="ml-64 pt-16">
-        <div className="p-8">
-          {children}
-        </div>
+      <main className="pt-16 ml-0 md:ml-64 transition-all duration-300">
+        <div className="p-8">{children}</div>
       </main>
     </div>
   );

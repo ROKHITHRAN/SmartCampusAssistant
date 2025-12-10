@@ -39,15 +39,13 @@ const QA = () => {
       try {
         const data = await getConversations();
         setConversations(data);
+        console.log(data);
 
         if (data.length > 0) {
           setSelectedConversationId(data[0].id);
         } else {
-          // Create initial conversation if none exist
-          const convo = await createConversation("New Chat");
-          const updated = await getConversations();
-          setConversations(updated);
-          setSelectedConversationId(convo.id);
+          setSelectedConversationId(null);
+          setMessages([]);
         }
       } catch (err) {
         console.error("Error loading conversations", err);
@@ -271,7 +269,7 @@ const QA = () => {
         </div>
 
         {/* Right: chat area */}
-        <div className="lg:col-span-3 bg-white rounded-xl shadow-md flex flex-col">
+        <div className="lg:col-span-3 bg-white rounded-xl shadow-md flex flex-col overflow-scroll">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <div>
